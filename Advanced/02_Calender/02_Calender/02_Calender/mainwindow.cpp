@@ -11,6 +11,7 @@ Window::Window()
 
     createGeneralOptionsGroupBox();
     createTextFormatsGroupBox();
+    createAnalysisResultGroupBox();
 
     QGridLayout *layout = new QGridLayout;
     layout->addWidget(codeAnalysisBox, 0, 0);
@@ -18,6 +19,7 @@ Window::Window()
     layout->addWidget(tempCalenderBox, 0, 2);
     layout->addWidget(generalOptionsGroupBox, 1, 0);
     layout->addWidget(textFormatsGroupBox, 1, 1);
+    layout->addWidget(AnalysisResultBox, 1, 2);
     layout->setSizeConstraint(QLayout::SetFixedSize);
     setLayout(layout);
 
@@ -189,6 +191,58 @@ void Window::reformatCalendarPage()
 
     calendar->setDateTextFormat(mayFirst, mayFirstFormat);
 }
+
+
+void Window::createAnalysisResultGroupBox()
+{
+    AnalysisResultBox = new QGroupBox(tr("Analysis Result"));
+    AnalysisResultLayout = new QGridLayout;
+    AnalysisResultFile = new QFile();
+
+    AnalysisResultViewer = new QTextEdit();
+    AnalysisResultViewer->clear();
+
+    AnalysisResultLayout->addWidget(AnalysisResultViewer, 2, 0, Qt::AlignCenter);
+    AnalysisResultBox->setLayout(AnalysisResultLayout);
+
+
+
+    // View Analysis Results //
+    AnalysisResultFileName = QString("AnalysisResults");
+
+    if(!AnalysisResultFileName.isNull())
+    {
+        qDebug() << "selected file path: " << AnalysisResultFileName.toUtf8();
+    }
+
+    // View source Code //
+    AnalysisResultViewer->clear();
+    AnalysisResultFile.setFileName(AnalysisResultFileName);
+
+    if(!AnalysisResultFile.exists())
+    {
+        qDebug() << "No exists file: " << AnalysisResultFileName;
+    }
+    else
+    {
+        qDebug() << AnalysisResultFileName << " open";
+    }
+
+    QString line;
+    if(AnalysisResultFile.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        QTextStream stream(&AnalysisResultFile);
+        while(!stream.atEnd())
+        {
+            line = stream.readLine();
+            AnalysisResultViewer->setText(AnalysisResultViewer->toPlainText()+line+"\n");
+            qDebug() << "line: " << line;
+        }
+    }
+
+
+}
+
 
 void Window::createTempCalender()
 {

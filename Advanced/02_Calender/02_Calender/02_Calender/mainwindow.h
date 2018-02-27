@@ -65,6 +65,14 @@ private:
     QGroupBox *codeViewerBox;
     QGridLayout *codeViewerLayout;
 
+    QGroupBox *AnalysisResultBox;
+    QGridLayout *AnalysisResultLayout;
+    QTextEdit *AnalysisResultViewer;
+    QString AnalysisResultFileName;
+    QFile AnalysisResultFile;
+
+
+
     QLabel* sourceCodeNameViewLabel;
 
     QLabel* threadTypeLabel;
