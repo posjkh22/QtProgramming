@@ -1,25 +1,38 @@
 #include <QtWidgets>
 #include <QTextEdit>
 #include <QDir>
+#include <QPixmap>
 #include "mainwindow.h"
+
+Window::~Window()
+{
+    system("rm -f *.bc AnalysisResults graph.png graph.dot");
+}
+
 
 Window::Window()
 {
-    createCodeAnalysisGroupBox();
     createCodeViewerBox();
-    createTempCalender();
-
-    createGeneralOptionsGroupBox();
-    createTextFormatsGroupBox();
+    createCodeAnalysisGroupBox();
     createAnalysisResultGroupBox();
 
+    /*
+    createTempCalender();
+    createGeneralOptionsGroupBox();
+    createTextFormatsGroupBox();
+    */
+
     QGridLayout *layout = new QGridLayout;
-    layout->addWidget(codeAnalysisBox, 0, 0);
-    layout->addWidget(codeViewerBox, 0, 1);
-    layout->addWidget(tempCalenderBox, 0, 2);
+    layout->addWidget(codeViewerBox, 0, 0);
+    layout->addWidget(codeAnalysisBox, 0, 1);
+    layout->addWidget(AnalysisResultBox, 0, 2);
+
+    /*
     layout->addWidget(generalOptionsGroupBox, 1, 0);
     layout->addWidget(textFormatsGroupBox, 1, 1);
-    layout->addWidget(AnalysisResultBox, 1, 2);
+    layout->addWidget(tempCalenderBox, 1, 2);
+    */
+
     layout->setSizeConstraint(QLayout::SetFixedSize);
     setLayout(layout);
 
@@ -35,15 +48,15 @@ void Window::threadTypeChanged(int index)
 {
     if(index == 0)
     {
-        threadTypeLabel->setText("Thread Type: Multi-thread");
+        threadOption = QString("--thread=Multithread");
     }
     else if(index == 1)
     {
-        threadTypeLabel->setText("Thread Type: Uni-thread");
+        threadOption = QString("--thread=Unithread");
     }
     else
     {
-        threadTypeLabel->setText("Thread Type: Error");
+        threadOption = QString("--thread");
     }
 }
 
@@ -51,23 +64,23 @@ void Window::targetTypeChanged(int index)
 {
     if(index == 0)
     {
-        targetTypeLabel->setText("Target Type: Linux");
+        targetOption = QString("--target=Linux");
     }
     else if(index == 1)
     {
-        targetTypeLabel->setText("Target Type: OSEC");
+        targetOption = QString("--target=OSEC");
     }
     else if(index == 2)
     {
-        targetTypeLabel->setText("Target Type: FreeRTOS");
+        targetOption = QString("--target=FreeRTOS");
     }
     else if(index == 3)
     {
-        targetTypeLabel->setText("Target Type: MicroC/OS-II");
+        targetOption = QString("--target=MicroC/OS-II");
     }
     else
     {
-        targetTypeLabel->setText("Target Type: Error");
+        targetOption = QString("Target Type: Error");
     }
 
 
@@ -197,13 +210,18 @@ void Window::createAnalysisResultGroupBox()
 {
     AnalysisResultBox = new QGroupBox(tr("Analysis Result"));
     AnalysisResultLayout = new QGridLayout;
-    AnalysisResultFile = new QFile();
+    //AnalysisResultFile = new QFile();
 
     AnalysisResultViewer = new QTextEdit();
     AnalysisResultViewer->clear();
 
+    const QSize ANALYSIS_VIEWER_SIZE = QSize(500, 700);
+    AnalysisResultViewer->setMinimumSize(ANALYSIS_VIEWER_SIZE);
+
     AnalysisResultLayout->addWidget(AnalysisResultViewer, 2, 0, Qt::AlignCenter);
     AnalysisResultBox->setLayout(AnalysisResultLayout);
+
+
 
 
 
@@ -212,6 +230,7 @@ void Window::createAnalysisResultGroupBox()
 
     if(!AnalysisResultFileName.isNull())
     {
+        system("echo 'ERROR:Improper Analysis Setting' >> AnalysisResults" );
         qDebug() << "selected file path: " << AnalysisResultFileName.toUtf8();
     }
 
@@ -227,19 +246,6 @@ void Window::createAnalysisResultGroupBox()
     {
         qDebug() << AnalysisResultFileName << " open";
     }
-
-    QString line;
-    if(AnalysisResultFile.open(QIODevice::ReadOnly | QIODevice::Text))
-    {
-        QTextStream stream(&AnalysisResultFile);
-        while(!stream.atEnd())
-        {
-            line = stream.readLine();
-            AnalysisResultViewer->setText(AnalysisResultViewer->toPlainText()+line+"\n");
-            qDebug() << "line: " << line;
-        }
-    }
-
 
 }
 
@@ -266,65 +272,169 @@ void Window::createTempCalender()
 
 void Window::handleAnalysis()
 {
-    threadOption = QString("--thread=Unithread");
-    targetOption = QString("--target=Linux");
-    QString file = QDir::currentPath() + "./code_analysis " + sourceFileName + " " + threadOption + " " + targetOption;
-    qDebug() << "running: " << "./code_analysis" + sourceFileName+ threadOption + targetOption;
-    main_process->start(file);
+    // Make Analysis //
+
+
+    InnerProgramCodeAnalysis = QString("/code_analysis");
+    InnerProgramDrawCallGraph = QString("/draw_callgraph");
+
+    AnalysisResults = QString("AnalysisResults");
+
+    QString file1 = QDir::currentPath() + InnerProgramCodeAnalysis+ " " + QDir::currentPath() + "/" +parsedBitcodeSourceFileName + " "
+            + threadOption + " " + targetOption;
+    qDebug() << "Analysis: " + file1;
+    main_process->start(file1);
+    main_process->waitForFinished();
+
+
+    // Make CallGraph //
+    QString file2 = QDir::currentPath() + InnerProgramDrawCallGraph+ " " + QDir::currentPath() + "/" +parsedBitcodeSourceFileName;
+    qDebug() << "DrawCallgraph: " +file2;
+    CallgraphDraw->start(file2);
+    CallgraphDraw->waitForFinished();
+
+    // View Analysis Results //
+    AnalysisResultViewer->clear();
+
+    QString line;
+    if(AnalysisResultFile.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        QTextStream stream(&AnalysisResultFile);
+        while(!stream.atEnd())
+        {
+            line = stream.readLine();
+            AnalysisResultViewer->setText(AnalysisResultViewer->toPlainText()+line+"\n");
+            qDebug() << "line: " << line;
+        }
+    }
+    AnalysisResultFile.close();
+
+    // Reset AnalysisResultFile
+    system("rm -f AnalysisResults");
+
+
+    // View Analysis Graph //
+    analysisGraphName = QString(QDir::currentPath() + "/graph.png");
+    qDebug() << "Image Load: " +analysisGraphName;
+    analysisGraph.load(analysisGraphName);
+    analysisGraphLabel->setPixmap(analysisGraph.scaled(analysisGraphLabel->width(),
+                                                       analysisGraphLabel->height(), Qt::IgnoreAspectRatio));
+
 }
 
 
 void Window::createCodeAnalysisGroupBox()
 {
+
+    threadOption = QString("--thread=Multithread");
+    targetOption = QString("--target=Linux");
+
+    // Layout //
     codeAnalysisBox = new QGroupBox(tr("CodeAnalysis"));
     codeAnalysisLayout = new QGridLayout;
 
+    codeAnalysisSettingBox = new QGroupBox(tr("Setting"));
+    codeAnalysisSettingLayout = new QGridLayout;
+
+
+    codeAnalysisGraphBox = new QGroupBox(tr("Graph"));
+    codeAnalysisGraphLayout = new QGridLayout;
+
     main_process = new QProcess(this);
+
+    CallgraphDraw = new QProcess(this);
 
     QPushButton *code_analysis_button = new QPushButton();
     code_analysis_button = new QPushButton("Code Analysis");
-    code_analysis_button->setGeometry(QRect(QPoint(100, 100), QSize(200, 50)));
+    code_analysis_button->setStyleSheet("border: 1px solid black; background: white");
+    const QSize BUTTON_SIZE = QSize(500, 30);
+    code_analysis_button->setMinimumSize(BUTTON_SIZE);
     connect(code_analysis_button, SIGNAL (released()), this, SLOT (handleAnalysis()));
-    codeAnalysisLayout->addWidget(code_analysis_button, 0, 0, Qt::AlignLeft);
+    codeAnalysisLayout->addWidget(code_analysis_button, 0, 0, Qt::AlignCenter);
     codeAnalysisBox->setLayout(codeAnalysisLayout);
 
 
-    threadTypeLabel = new QLabel(this);
-    threadTypeLabel->setText("Thread Type: ");
-    codeAnalysisLayout->addWidget(threadTypeLabel, 0, 1, Qt::AlignLeft);
-    codeAnalysisBox->setLayout(codeAnalysisLayout);
 
-    targetTypeLabel = new QLabel(this);
-    targetTypeLabel->setText("Target Type: ");
-    codeAnalysisLayout->addWidget(targetTypeLabel, 0, 2, Qt::AlignLeft);
-    codeAnalysisBox->setLayout(codeAnalysisLayout);
+    // threadCombo box //
+    threadCombo = new QComboBox;
+
+    threadLabel = new QLabel(tr("&Thread Type"));
+    threadLabel->setBuddy(threadCombo);
+
+    threadCombo->addItem(tr("Multi-thread"), Qt::Sunday);
+    threadCombo->addItem(tr("Uni-thread"), Qt::Monday);
 
 
-    // Show the image //
-    QLabel* analysisGraph = new QLabel("<img src='image.jpg' />");
-    codeAnalysisLayout->addWidget(analysisGraph, 1, 0, Qt::AlignCenter);
-    analysisGraph->show();
-    codeAnalysisBox->setLayout(codeAnalysisLayout);
+    // targetCombo box //
+    targetCombo = new QComboBox;
+
+    targetLabel = new QLabel(tr("&OS Type"));
+    targetLabel->setBuddy(targetCombo);
+
+    targetCombo->addItem(tr("Linux"), Qt::Sunday);
+    targetCombo->addItem(tr("OSEC"), Qt::Monday);
+    targetCombo->addItem(tr("FreeRTOS"), Qt::Monday);
+    targetCombo->addItem(tr("MicroC/OS-II"), Qt::Monday);
+
+    connect(threadCombo, SIGNAL(currentIndexChanged(int)),
+            this, SLOT(threadTypeChanged(int)));
+    connect(targetCombo, SIGNAL(currentIndexChanged(int)),
+            this, SLOT(targetTypeChanged(int)));
+
+
+    codeAnalysisSettingLayout->addWidget(threadLabel, 0, 0);
+    codeAnalysisSettingLayout->addWidget(threadCombo, 0, 1);
+    codeAnalysisSettingLayout->addWidget(targetLabel, 1, 0);
+    codeAnalysisSettingLayout->addWidget(targetCombo, 1, 1);
+
+    codeAnalysisSettingBox->setLayout(codeAnalysisSettingLayout);
 
 
 
     /*
-    calendar = new QCalendarWidget;
-    calendar->setMinimumDate(QDate(1900, 1, 1));
-    calendar->setMaximumDate(QDate(3000, 1, 1));
-    calendar->setGridVisible(true);
+    threadTypeLabel = new QLabel(this);
+    threadTypeLabel->setText("Thread Type: ");
+    codeAnalysisSettingLayout->addWidget(threadTypeLabel, 0, 0, Qt::AlignLeft);
+    codeAnalysisSettingBox->setLayout(codeAnalysisSettingLayout);
 
-    connect(calendar, SIGNAL(currentPageChanged(int,int)),
-            this, SLOT(reformatCalendarPage()));
-
-    codeAnalysisLayout->addWidget(calendar, 1, 1, Qt::AlignCenter);
-    codeAnalysis->setLayout(codeAnalysisLayout);
+    targetTypeLabel = new QLabel(this);
+    targetTypeLabel->setText("OS Type: ");
+    codeAnalysisSettingLayout->addWidget(targetTypeLabel, 1, 0, Qt::AlignLeft);
+    codeAnalysisSettingBox->setLayout(codeAnalysisSettingLayout);
     */
+
+
+
+
+    // Show the image //
+
+    analysisGraphName = QString(QDir::currentPath() + "/default_image.png");
+    analysisGraph.load(analysisGraphName);
+
+    qDebug() << "image path: " << analysisGraphName;
+
+    analysisGraphLabel = new QLabel();
+    int analysisGraphWidth = analysisGraphLabel->width();
+    int analysisGraphHeight = analysisGraphLabel->height();
+    analysisGraphLabel->setPixmap(analysisGraph.scaled(analysisGraphWidth, analysisGraphHeight, Qt::KeepAspectRatio));
+
+    codeAnalysisGraphLayout->addWidget(analysisGraphLabel, 0, 0, Qt::AlignCenter);
+    const QSize GRAPH_SIZE = QSize(500, 500);
+    analysisGraphLabel->setMinimumSize(GRAPH_SIZE);
+
+    codeAnalysisGraphBox->setLayout(codeAnalysisGraphLayout);
+
+    codeAnalysisLayout->addWidget(codeAnalysisSettingBox, 1, 0);
+    codeAnalysisLayout->addWidget(codeAnalysisGraphBox, 2, 0);
+
+    codeAnalysisBox->setLayout(codeAnalysisLayout);
+
+
 
 }
 
 
-void Window::handleButton()
+void Window::handleCodeViewer()
 {
     // Pop FileDiaglog //
     sourceFileName = QFileDialog::getOpenFileName(
@@ -338,8 +448,26 @@ void Window::handleButton()
         qDebug() << "selected file path: " << sourceFileName.toUtf8();
     }
 
+    QStringList sourceFileNameList = sourceFileName.split("/");
+    int SOURCEFILENAMELISTSIZE = sourceFileNameList.size();
+    QString parsedsourceFileName = sourceFileNameList.at(SOURCEFILENAMELISTSIZE-1);
+
     // Label source Code //
-    sourceCodeNameViewLabel->setText("Source code: " + sourceFileName.toUtf8());
+    sourceCodeNameViewLabel->setText("Source code: " + parsedsourceFileName.toUtf8());
+
+    // Generate bitcode //
+
+    parsedBitcodeSourceFileNameList = parsedsourceFileName.split(".");
+    parsedBitcodeSourceFileName = parsedBitcodeSourceFileNameList.at(0) + ".bc";
+    QString CLANG_PATH("/home/posjkh/LLVM/llvm-ubuntu-linux-5.0/bin/");
+
+    QString file = CLANG_PATH + "clang -g -S -emit-llvm -o " + QDir::currentPath() + "/" + parsedBitcodeSourceFileName
+            + " " + QDir::currentPath() + "/" +  parsedsourceFileName;
+    qDebug() << "running: " << file;
+
+    bitcodeGen = new QProcess(this);
+    bitcodeGen->start(file);
+    bitcodeGen->waitForFinished();
 
 
     // View source Code //
@@ -359,13 +487,26 @@ void Window::handleButton()
     if(sourceFile.open(QIODevice::ReadOnly | QIODevice::Text))
     {
         QTextStream stream(&sourceFile);
+
+        int lineNumber = 1;
+        QString lineNumberQString;
         while(!stream.atEnd())
         {
             line = stream.readLine();
-            sourceCodeViewer->setText(sourceCodeViewer->toPlainText()+line+"\n");
+            sourceCodeViewer->setText(sourceCodeViewer->toPlainText()+ lineNumberQString.setNum(lineNumber++) +": " + line+"\n");
             qDebug() << "line: " << line;
         }
     }
+    sourceFile.close();
+
+    // Reset: Analysis Graph & Analysis Results //
+    AnalysisResultViewer->clear();
+    analysisGraphName = QString(QDir::currentPath() + "/default_image.png");
+    analysisGraph.load(analysisGraphName);
+    analysisGraphLabel->setPixmap(analysisGraph.scaled(analysisGraphLabel->width(),
+                                                       analysisGraphLabel->height(), Qt::KeepAspectRatio));
+
+    system("rm -f AnalysisResults graph.png graph.dot");
 }
 
 
@@ -379,21 +520,31 @@ void Window::createCodeViewerBox()
 
     QPushButton *code_sel_button = new QPushButton();
     code_sel_button = new QPushButton("Code Selector");
-    code_sel_button->setGeometry(QRect(QPoint(100, 100), QSize(200, 50)));
-    connect(code_sel_button, SIGNAL (released()), this, SLOT (handleButton()));
-    codeViewerLayout->addWidget(code_sel_button, 0, 0, Qt::AlignLeft);
+    //code_sel_button->setGeometry(QRect(QPoint(100, 100), QSize(200, 50)));
+
+    code_sel_button->setStyleSheet("border: 1px solid black; background: white");
+    const QSize BUTTON_SIZE = QSize(400, 30);
+    code_sel_button->setMinimumSize(BUTTON_SIZE);
+
+
+
+
+    connect(code_sel_button, SIGNAL (released()), this, SLOT (handleCodeViewer()));
+    codeViewerLayout->addWidget(code_sel_button, 0, 0, Qt::AlignCenter);
     codeViewerBox->setLayout(codeViewerLayout);
 
 
     // Label: SourceCodeName View //
-    sourceCodeNameViewLabel = new QLabel(this);
+    sourceCodeNameViewLabel = new QLabel(QString("Source code: "));
     codeViewerLayout->addWidget(sourceCodeNameViewLabel, 1, 0, Qt::AlignLeft);
     codeViewerBox->setLayout(codeViewerLayout);
 
 
     // TextEdit: Source code viewer //
     sourceCodeViewer = new QTextEdit();
-    sourceCodeViewer->resize(50, 170);
+    const QSize CODE_VIEWER_SIZE = QSize(400, 600);
+    sourceCodeViewer->setMinimumSize(CODE_VIEWER_SIZE);
+
     sourceCodeViewer->clear();
 
     codeViewerLayout->addWidget(sourceCodeViewer, 2, 0, Qt::AlignCenter);
@@ -410,32 +561,6 @@ void Window::createCodeViewerBox()
 void Window::createGeneralOptionsGroupBox()
 {
     generalOptionsGroupBox = new QGroupBox(tr("General Options"));
-
-    // threadCombo box //
-    threadCombo = new QComboBox;
-
-    threadLabel = new QLabel(tr("&Thread Type"));
-    threadLabel->setBuddy(threadCombo);
-
-    threadCombo->addItem(tr("Multi-thread"), Qt::Sunday);
-    threadCombo->addItem(tr("Uni-thread"), Qt::Monday);
-
-
-
-    // targetCombo box //
-    targetCombo = new QComboBox;
-
-    targetLabel = new QLabel(tr("&OS Type"));
-    targetLabel->setBuddy(targetCombo);
-
-    targetCombo->addItem(tr("Linux"), Qt::Sunday);
-    targetCombo->addItem(tr("OSEC"), Qt::Monday);
-    targetCombo->addItem(tr("FreeRTOS"), Qt::Monday);
-    targetCombo->addItem(tr("MicroC/OS-II"), Qt::Monday);
-
-
-
-
 
 
     localeCombo = new QComboBox;
@@ -523,21 +648,10 @@ void Window::createGeneralOptionsGroupBox()
             this, SLOT(verticalHeaderChanged(int)));
 
 
-    connect(threadCombo, SIGNAL(currentIndexChanged(int)),
-            this, SLOT(threadTypeChanged(int)));
-    connect(targetCombo, SIGNAL(currentIndexChanged(int)),
-            this, SLOT(targetTypeChanged(int)));
-
-
-
-
-
     QHBoxLayout *checkBoxLayout = new QHBoxLayout;
     checkBoxLayout->addWidget(gridCheckBox);
     checkBoxLayout->addStretch();
     checkBoxLayout->addWidget(navigationCheckBox);
-
-
 
 
     QGridLayout *outerLayout = new QGridLayout;
@@ -553,17 +667,7 @@ void Window::createGeneralOptionsGroupBox()
     outerLayout->addWidget(verticalHeaderLabel, 5, 0);
     outerLayout->addWidget(verticalHeaderCombo, 5, 1);
 
-    outerLayout->addWidget(threadLabel, 6, 0);
-    outerLayout->addWidget(threadCombo, 6, 1);
-    outerLayout->addWidget(targetLabel, 7, 0);
-    outerLayout->addWidget(targetCombo, 7, 1);
-
-
-
     generalOptionsGroupBox->setLayout(outerLayout);
-
-
-
 
 
     firstDayChanged(firstDayCombo->currentIndex());

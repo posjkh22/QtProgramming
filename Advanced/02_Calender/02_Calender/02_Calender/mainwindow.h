@@ -5,6 +5,7 @@
 #include <QFile>
 #include <QTextEdit>
 #include <QProcess>
+#include <iostream>
 
 
 class QCalendarWidget;
@@ -22,6 +23,8 @@ class Window : public QWidget
 
 public:
     Window();
+    ~Window();
+
 
 private slots:
     void localeChanged(int index);
@@ -36,7 +39,7 @@ private slots:
     void weekendFormatChanged();
     void reformatHeaders();
     void reformatCalendarPage();
-    void handleButton();
+    void handleCodeViewer();
     void handleAnalysis();
 
     void threadTypeChanged(int index);
@@ -50,14 +53,30 @@ private:
 
     void createGeneralOptionsGroupBox();
     void createTextFormatsGroupBox();
+    void createAnalysisResultGroupBox();
+
+
     QComboBox *createColorComboBox();
 
     QString sourceFileName;
+    QString parsedBitcodeSourceFileName;
+    QStringList parsedBitcodeSourceFileNameList;
+
     QFile sourceFile;
     QTextEdit *sourceCodeViewer;
 
     QGroupBox* codeAnalysisBox;
     QGridLayout *codeAnalysisLayout;
+    QGroupBox* codeAnalysisRunBox;
+    QGridLayout *codeAnalysisRunLayout;
+    QGroupBox* codeAnalysisSettingBox;
+    QGridLayout *codeAnalysisSettingLayout;
+    QGroupBox* codeAnalysisGraphBox;
+    QGridLayout *codeAnalysisGraphLayout;
+
+    QString InnerProgramCodeAnalysis;
+    QString InnerProgramDrawCallGraph;
+    QString AnalysisResults;
 
     QGroupBox *tempCalenderBox;
     QGridLayout *tempCalenderLayout;
@@ -71,7 +90,9 @@ private:
     QString AnalysisResultFileName;
     QFile AnalysisResultFile;
 
-
+    QLabel* analysisGraphLabel;
+    QPixmap analysisGraph;
+    QString analysisGraphName;
 
     QLabel* sourceCodeNameViewLabel;
 
@@ -81,6 +102,9 @@ private:
 
 
     QProcess *main_process;
+    QProcess *CallgraphDraw;
+    QProcess *bitcodeGen;
+
     QString threadOption;
     QString targetOption;
 

@@ -22,7 +22,7 @@ QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_Window_t {
     QByteArrayData data[20];
-    char stringdata0[317];
+    char stringdata0[321];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -47,10 +47,10 @@ QT_MOC_LITERAL(12, 174, 20), // "weekdayFormatChanged"
 QT_MOC_LITERAL(13, 195, 20), // "weekendFormatChanged"
 QT_MOC_LITERAL(14, 216, 15), // "reformatHeaders"
 QT_MOC_LITERAL(15, 232, 20), // "reformatCalendarPage"
-QT_MOC_LITERAL(16, 253, 12), // "handleButton"
-QT_MOC_LITERAL(17, 266, 14), // "handleAnalysis"
-QT_MOC_LITERAL(18, 281, 17), // "threadTypeChanged"
-QT_MOC_LITERAL(19, 299, 17) // "targetTypeChanged"
+QT_MOC_LITERAL(16, 253, 16), // "handleCodeViewer"
+QT_MOC_LITERAL(17, 270, 14), // "handleAnalysis"
+QT_MOC_LITERAL(18, 285, 17), // "threadTypeChanged"
+QT_MOC_LITERAL(19, 303, 17) // "targetTypeChanged"
 
     },
     "Window\0localeChanged\0\0index\0firstDayChanged\0"
@@ -59,7 +59,7 @@ QT_MOC_LITERAL(19, 299, 17) // "targetTypeChanged"
     "minimumDateChanged\0date\0maximumDateChanged\0"
     "weekdayFormatChanged\0weekendFormatChanged\0"
     "reformatHeaders\0reformatCalendarPage\0"
-    "handleButton\0handleAnalysis\0"
+    "handleCodeViewer\0handleAnalysis\0"
     "threadTypeChanged\0targetTypeChanged"
 };
 #undef QT_MOC_LITERAL
@@ -134,7 +134,7 @@ void Window::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void
         case 9: _t->weekendFormatChanged(); break;
         case 10: _t->reformatHeaders(); break;
         case 11: _t->reformatCalendarPage(); break;
-        case 12: _t->handleButton(); break;
+        case 12: _t->handleCodeViewer(); break;
         case 13: _t->handleAnalysis(); break;
         case 14: _t->threadTypeChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
         case 15: _t->targetTypeChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
