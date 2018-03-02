@@ -376,6 +376,7 @@ void Window::handleAnalysis()
     main_process->waitForFinished();
 
 
+
     // Make CallGraph //
     QString file2 = QDir::currentPath() + InnerProgramDrawCallGraph+ " " + QDir::currentPath() + "/" +parsedBitcodeSourceFileName;
     qDebug() << "DrawCallgraph: " +file2;
@@ -600,6 +601,8 @@ void Window::handleCodeViewer()
     bitcodeGen->waitForFinished();
 
 
+
+
     // View source Code //
     sourceCodeViewer->clear();
     sourceFile.setFileName(sourceFileName);
@@ -628,6 +631,9 @@ void Window::handleCodeViewer()
         }
     }
     sourceFile.close();
+
+    // Reset: Analysis path //
+    AnalysisPathViewer->clear();
 
     // Reset: Analysis Graph & Analysis Results //
     AnalysisResultViewer->clear();
