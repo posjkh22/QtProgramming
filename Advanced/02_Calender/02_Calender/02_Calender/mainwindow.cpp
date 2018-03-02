@@ -15,6 +15,7 @@ Window::Window()
     createCodeViewerBox();
     createCodeAnalysisGroupBox();
     createAnalysisResultGroupBox();
+    createAnalysisPathGroupBox();
 
     /*
     createTempCalender();
@@ -23,22 +24,27 @@ Window::Window()
     */
 
     QGridLayout *layout = new QGridLayout;
-    layout->addWidget(codeViewerBox, 0, 0);
-    layout->addWidget(codeAnalysisBox, 0, 1);
-    layout->addWidget(AnalysisResultBox, 0, 2);
+    QGridLayout *UpperLayout = new QGridLayout;
+    QGridLayout *LowerLayout = new QGridLayout;
 
-    /*
-    layout->addWidget(generalOptionsGroupBox, 1, 0);
-    layout->addWidget(textFormatsGroupBox, 1, 1);
-    layout->addWidget(tempCalenderBox, 1, 2);
-    */
+    UpperGroupBox = new QGroupBox;
+    LowerGroupBox = new QGroupBox;
 
+    UpperGroupBox->setLayout(UpperLayout);
+    LowerGroupBox->setLayout(LowerLayout);
+
+    UpperLayout->addWidget(codeViewerBox, 0, 0);
+    UpperLayout->addWidget(codeAnalysisBox, 0, 1);
+    UpperLayout->addWidget(AnalysisResultBox, 0, 2);
+
+    LowerLayout->addWidget(codeAnalysisPathBox, 0, 0);
+
+
+    layout->addWidget(UpperGroupBox, 0, 0);
+    layout->addWidget(LowerGroupBox, 1, 0);
     layout->setSizeConstraint(QLayout::SetFixedSize);
+
     setLayout(layout);
-
-    //previewLayout->setRowMinimumHeight(0, calendar->sizeHint().height());
-    //previewLayout->setColumnMinimumWidth(0, calendar->sizeHint().width());
-
     setWindowTitle(tr("Code Analysis Widget"));
 }
 
@@ -83,8 +89,38 @@ void Window::targetTypeChanged(int index)
         targetOption = QString("Target Type: Error");
     }
 
-
 }
+
+void Window::AnalysisTypeChanged(int index)
+{
+    if(index == 0)
+    {
+        AnalysisOption = QString("--analysis=MemoryAllocationC");
+    }
+    else if(index == 1)
+    {
+        AnalysisOption = QString("--analysis=FilePointerAnalysisC");
+    }
+    else if(index == 2)
+    {
+        AnalysisOption = QString("--analysis=Deadlock");
+    }
+    else if(index == 3)
+    {
+        AnalysisOption = QString("--analysis=SharedVariables");
+    }
+    else if(index == 4)
+    {
+        AnalysisOption = QString("--analysis=SharedFunctions");
+    }
+    else
+    {
+        AnalysisOption = QString("--anlysis");
+    }
+}
+
+
+
 
 void Window::localeChanged(int index)
 {
@@ -205,6 +241,48 @@ void Window::reformatCalendarPage()
     calendar->setDateTextFormat(mayFirst, mayFirstFormat);
 }
 
+void Window::createAnalysisPathGroupBox()
+{
+    codeAnalysisPathBox = new QGroupBox(tr("Analysis Path"));
+
+    AnalysisPathLayout = new QGridLayout;
+
+    AnalysisPathViewer = new QTextEdit();
+    const QSize ANALYSIS_PATH_FIXED_SIZE = QSize(1150, 100);
+    AnalysisPathViewer->setFixedSize(ANALYSIS_PATH_FIXED_SIZE);
+    const QSize ANALYSIS_PATH_MAX_SIZE = QSize(1150, 100);
+    AnalysisPathViewer->setMaximumSize(ANALYSIS_PATH_MAX_SIZE);
+
+
+    AnalysisPathViewer->clear();
+    AnalysisPathLayout->addWidget(AnalysisPathViewer, 0, 0, Qt::AlignCenter);
+
+    codeAnalysisPathBox->setLayout(AnalysisPathLayout);
+
+
+
+    // View Analysis Results //
+    AnalysisPathFileName = QString("AnalysisPaths");
+
+    if(!AnalysisPathFileName.isNull())
+    {
+        system("echo 'ERROR:Improper Analysis Setting' >> AnalysisPaths" );
+        qDebug() << "selected file path: " << AnalysisPathFileName.toUtf8();
+    }
+
+    // View source Code //
+    AnalysisPathViewer->clear();
+    AnalysisPathFile.setFileName(AnalysisPathFileName);
+
+    if(!AnalysisPathFile.exists())
+    {
+        qDebug() << "No exists file: " << AnalysisPathFileName;
+    }
+    else
+    {
+        qDebug() << AnalysisResultFileName << " open";
+    }
+}
 
 void Window::createAnalysisResultGroupBox()
 {
@@ -213,10 +291,17 @@ void Window::createAnalysisResultGroupBox()
     //AnalysisResultFile = new QFile();
 
     AnalysisResultViewer = new QTextEdit();
+    AnalysisResultViewer->setFontPointSize(8.5);
+
+    QFont AnalysisResultViewerFont = AnalysisResultViewer->currentFont();
+    QFontMetrics metrics(AnalysisResultViewerFont);
+    AnalysisResultViewer->setFontPointSize(8.0);
+    AnalysisResultViewer->setTabStopWidth(4 * metrics.width(' '));
+
     AnalysisResultViewer->clear();
 
-    const QSize ANALYSIS_VIEWER_SIZE = QSize(500, 700);
-    AnalysisResultViewer->setMinimumSize(ANALYSIS_VIEWER_SIZE);
+    const QSize ANALYSIS_RESULTS_SIZE = QSize(300, 550);
+    AnalysisResultViewer->setFixedSize(ANALYSIS_RESULTS_SIZE);
 
     AnalysisResultLayout->addWidget(AnalysisResultViewer, 2, 0, Qt::AlignCenter);
     AnalysisResultBox->setLayout(AnalysisResultLayout);
@@ -269,19 +354,23 @@ void Window::createTempCalender()
 
 }
 
+void Window::handleGraphExpand()
+{
+    system("display graph.png");
+}
+
+
 
 void Window::handleAnalysis()
 {
     // Make Analysis //
-
-
     InnerProgramCodeAnalysis = QString("/code_analysis");
     InnerProgramDrawCallGraph = QString("/draw_callgraph");
 
     AnalysisResults = QString("AnalysisResults");
 
     QString file1 = QDir::currentPath() + InnerProgramCodeAnalysis+ " " + QDir::currentPath() + "/" +parsedBitcodeSourceFileName + " "
-            + threadOption + " " + targetOption;
+            + threadOption + " " + targetOption + " " + AnalysisOption ;
     qDebug() << "Analysis: " + file1;
     main_process->start(file1);
     main_process->waitForFinished();
@@ -309,8 +398,29 @@ void Window::handleAnalysis()
     }
     AnalysisResultFile.close();
 
-    // Reset AnalysisResultFile
+    // Reset AnalysisResultFile //
     system("rm -f AnalysisResults");
+
+
+
+    // View Analysis Paths //
+    AnalysisPathViewer->clear();
+
+    QString path_line;
+    if(AnalysisPathFile.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        QTextStream stream(&AnalysisPathFile);
+        while(!stream.atEnd())
+        {
+            path_line = stream.readLine();
+            AnalysisPathViewer->setText(AnalysisPathViewer->toPlainText()+path_line+"\n");
+            qDebug() << "line: " << path_line;
+        }
+    }
+    AnalysisPathFile.close();
+
+    // Reset AnalysisPathFile
+    system("rm -f AnalysisPaths");
 
 
     // View Analysis Graph //
@@ -328,12 +438,17 @@ void Window::createCodeAnalysisGroupBox()
 
     threadOption = QString("--thread=Multithread");
     targetOption = QString("--target=Linux");
+    AnalysisOption = QString("--analysis=MemoryAllocationC");
 
     // Layout //
     codeAnalysisBox = new QGroupBox(tr("CodeAnalysis"));
     codeAnalysisLayout = new QGridLayout;
 
     codeAnalysisSettingBox = new QGroupBox(tr("Setting"));
+
+    const QSize SETTINGBOX_SIZE = QSize(500, 120);
+    codeAnalysisSettingBox->setFixedSize(SETTINGBOX_SIZE);
+
     codeAnalysisSettingLayout = new QGridLayout;
 
 
@@ -344,15 +459,24 @@ void Window::createCodeAnalysisGroupBox()
 
     CallgraphDraw = new QProcess(this);
 
+    // Analysis start button //
     QPushButton *code_analysis_button = new QPushButton();
     code_analysis_button = new QPushButton("Code Analysis");
-    code_analysis_button->setStyleSheet("border: 1px solid black; background: white");
+    //code_analysis_button->setStyleSheet("border: 1px solid black; background: white");
     const QSize BUTTON_SIZE = QSize(500, 30);
-    code_analysis_button->setMinimumSize(BUTTON_SIZE);
+    code_analysis_button->setFixedSize(BUTTON_SIZE);
     connect(code_analysis_button, SIGNAL (released()), this, SLOT (handleAnalysis()));
     codeAnalysisLayout->addWidget(code_analysis_button, 0, 0, Qt::AlignCenter);
     codeAnalysisBox->setLayout(codeAnalysisLayout);
 
+    // graph expand button //
+    QPushButton *graph_expand_button = new QPushButton();
+    graph_expand_button = new QPushButton("Analysis Graph Expand");
+    const QSize GRAPH_EXPAND_BUTTON_SIZE = QSize(500, 30);
+    graph_expand_button->setFixedSize(GRAPH_EXPAND_BUTTON_SIZE);
+    connect(graph_expand_button, SIGNAL (released()), this, SLOT (handleGraphExpand()));
+    codeAnalysisLayout->addWidget(graph_expand_button, 3, 0, Qt::AlignCenter);
+    codeAnalysisBox->setLayout(codeAnalysisLayout);
 
 
     // threadCombo box //
@@ -376,33 +500,37 @@ void Window::createCodeAnalysisGroupBox()
     targetCombo->addItem(tr("FreeRTOS"), Qt::Monday);
     targetCombo->addItem(tr("MicroC/OS-II"), Qt::Monday);
 
+
+    // AnalysisCombo box //
+    AnalysisCombo = new QComboBox;
+
+    AnalysisLabel = new QLabel(tr("&Analysis Type"));
+    AnalysisLabel->setBuddy(AnalysisCombo);
+
+    AnalysisCombo->addItem(tr("malloc/free"), Qt::Sunday);
+    AnalysisCombo->addItem(tr("fopen/fclose"), Qt::Sunday);
+    AnalysisCombo->addItem(tr("Deadlock"), Qt::Monday);
+    AnalysisCombo->addItem(tr("Semaphore Integrity"), Qt::Monday);
+    AnalysisCombo->addItem(tr("Shared Variables"), Qt::Monday);
+    AnalysisCombo->addItem(tr("Shared Functions"), Qt::Monday);
+
     connect(threadCombo, SIGNAL(currentIndexChanged(int)),
             this, SLOT(threadTypeChanged(int)));
     connect(targetCombo, SIGNAL(currentIndexChanged(int)),
             this, SLOT(targetTypeChanged(int)));
+    connect(AnalysisCombo, SIGNAL(currentIndexChanged(int)),
+            this, SLOT(AnalysisTypeChanged(int)));
 
 
     codeAnalysisSettingLayout->addWidget(threadLabel, 0, 0);
     codeAnalysisSettingLayout->addWidget(threadCombo, 0, 1);
     codeAnalysisSettingLayout->addWidget(targetLabel, 1, 0);
     codeAnalysisSettingLayout->addWidget(targetCombo, 1, 1);
+    codeAnalysisSettingLayout->addWidget(AnalysisLabel, 2, 0);
+    codeAnalysisSettingLayout->addWidget(AnalysisCombo, 2, 1);
+
 
     codeAnalysisSettingBox->setLayout(codeAnalysisSettingLayout);
-
-
-
-    /*
-    threadTypeLabel = new QLabel(this);
-    threadTypeLabel->setText("Thread Type: ");
-    codeAnalysisSettingLayout->addWidget(threadTypeLabel, 0, 0, Qt::AlignLeft);
-    codeAnalysisSettingBox->setLayout(codeAnalysisSettingLayout);
-
-    targetTypeLabel = new QLabel(this);
-    targetTypeLabel->setText("OS Type: ");
-    codeAnalysisSettingLayout->addWidget(targetTypeLabel, 1, 0, Qt::AlignLeft);
-    codeAnalysisSettingBox->setLayout(codeAnalysisSettingLayout);
-    */
-
 
 
 
@@ -414,18 +542,20 @@ void Window::createCodeAnalysisGroupBox()
     qDebug() << "image path: " << analysisGraphName;
 
     analysisGraphLabel = new QLabel();
-    int analysisGraphWidth = analysisGraphLabel->width();
-    int analysisGraphHeight = analysisGraphLabel->height();
-    analysisGraphLabel->setPixmap(analysisGraph.scaled(analysisGraphWidth, analysisGraphHeight, Qt::KeepAspectRatio));
+
+    const QSize GRAPH_SIZE = QSize(475, 375);
+    analysisGraphLabel->setFixedSize(GRAPH_SIZE);
+
+    analysisGraphLabel->setPixmap(analysisGraph.scaled(analysisGraphLabel->width(),
+                                                       analysisGraphLabel->height(), Qt::IgnoreAspectRatio));
 
     codeAnalysisGraphLayout->addWidget(analysisGraphLabel, 0, 0, Qt::AlignCenter);
-    const QSize GRAPH_SIZE = QSize(500, 500);
-    analysisGraphLabel->setMinimumSize(GRAPH_SIZE);
+
 
     codeAnalysisGraphBox->setLayout(codeAnalysisGraphLayout);
 
-    codeAnalysisLayout->addWidget(codeAnalysisSettingBox, 1, 0);
-    codeAnalysisLayout->addWidget(codeAnalysisGraphBox, 2, 0);
+    codeAnalysisLayout->addWidget(codeAnalysisSettingBox, 1, 0, Qt::AlignCenter);
+    codeAnalysisLayout->addWidget(codeAnalysisGraphBox, 2, 0, Qt::AlignCenter);
 
     codeAnalysisBox->setLayout(codeAnalysisLayout);
 
@@ -504,7 +634,7 @@ void Window::handleCodeViewer()
     analysisGraphName = QString(QDir::currentPath() + "/default_image.png");
     analysisGraph.load(analysisGraphName);
     analysisGraphLabel->setPixmap(analysisGraph.scaled(analysisGraphLabel->width(),
-                                                       analysisGraphLabel->height(), Qt::KeepAspectRatio));
+                                                       analysisGraphLabel->height(), Qt::IgnoreAspectRatio));
 
     system("rm -f AnalysisResults graph.png graph.dot");
 }
@@ -522,9 +652,9 @@ void Window::createCodeViewerBox()
     code_sel_button = new QPushButton("Code Selector");
     //code_sel_button->setGeometry(QRect(QPoint(100, 100), QSize(200, 50)));
 
-    code_sel_button->setStyleSheet("border: 1px solid black; background: white");
-    const QSize BUTTON_SIZE = QSize(400, 30);
-    code_sel_button->setMinimumSize(BUTTON_SIZE);
+    //code_sel_button->setStyleSheet("border: 1px solid black; background: white");
+    const QSize BUTTON_SIZE = QSize(300, 30);
+    code_sel_button->setFixedSize(BUTTON_SIZE);
 
 
 
@@ -542,8 +672,13 @@ void Window::createCodeViewerBox()
 
     // TextEdit: Source code viewer //
     sourceCodeViewer = new QTextEdit();
-    const QSize CODE_VIEWER_SIZE = QSize(400, 600);
-    sourceCodeViewer->setMinimumSize(CODE_VIEWER_SIZE);
+    QFont sourceCodeViewerFont = sourceCodeViewer->currentFont();
+    QFontMetrics metrics(sourceCodeViewerFont);
+    sourceCodeViewer->setFontPointSize(8.5);
+    sourceCodeViewer->setTabStopWidth(4 * metrics.width(' '));
+
+    const QSize CODE_VIEWER_SIZE = QSize(300, 500);
+    sourceCodeViewer->setFixedSize(CODE_VIEWER_SIZE);
 
     sourceCodeViewer->clear();
 

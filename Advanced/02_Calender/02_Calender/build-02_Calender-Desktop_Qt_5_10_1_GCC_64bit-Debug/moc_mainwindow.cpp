@@ -21,8 +21,8 @@ QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_Window_t {
-    QByteArrayData data[20];
-    char stringdata0[321];
+    QByteArrayData data[22];
+    char stringdata0[359];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -49,8 +49,10 @@ QT_MOC_LITERAL(14, 216, 15), // "reformatHeaders"
 QT_MOC_LITERAL(15, 232, 20), // "reformatCalendarPage"
 QT_MOC_LITERAL(16, 253, 16), // "handleCodeViewer"
 QT_MOC_LITERAL(17, 270, 14), // "handleAnalysis"
-QT_MOC_LITERAL(18, 285, 17), // "threadTypeChanged"
-QT_MOC_LITERAL(19, 303, 17) // "targetTypeChanged"
+QT_MOC_LITERAL(18, 285, 17), // "handleGraphExpand"
+QT_MOC_LITERAL(19, 303, 17), // "threadTypeChanged"
+QT_MOC_LITERAL(20, 321, 17), // "targetTypeChanged"
+QT_MOC_LITERAL(21, 339, 19) // "AnalysisTypeChanged"
 
     },
     "Window\0localeChanged\0\0index\0firstDayChanged\0"
@@ -60,7 +62,8 @@ QT_MOC_LITERAL(19, 303, 17) // "targetTypeChanged"
     "weekdayFormatChanged\0weekendFormatChanged\0"
     "reformatHeaders\0reformatCalendarPage\0"
     "handleCodeViewer\0handleAnalysis\0"
-    "threadTypeChanged\0targetTypeChanged"
+    "handleGraphExpand\0threadTypeChanged\0"
+    "targetTypeChanged\0AnalysisTypeChanged"
 };
 #undef QT_MOC_LITERAL
 
@@ -70,7 +73,7 @@ static const uint qt_meta_data_Window[] = {
        7,       // revision
        0,       // classname
        0,    0, // classinfo
-      16,   14, // methods
+      18,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -78,22 +81,24 @@ static const uint qt_meta_data_Window[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags
-       1,    1,   94,    2, 0x08 /* Private */,
-       4,    1,   97,    2, 0x08 /* Private */,
-       5,    1,  100,    2, 0x08 /* Private */,
-       6,    1,  103,    2, 0x08 /* Private */,
-       7,    1,  106,    2, 0x08 /* Private */,
-       8,    0,  109,    2, 0x08 /* Private */,
-       9,    1,  110,    2, 0x08 /* Private */,
-      11,    1,  113,    2, 0x08 /* Private */,
-      12,    0,  116,    2, 0x08 /* Private */,
-      13,    0,  117,    2, 0x08 /* Private */,
-      14,    0,  118,    2, 0x08 /* Private */,
-      15,    0,  119,    2, 0x08 /* Private */,
-      16,    0,  120,    2, 0x08 /* Private */,
-      17,    0,  121,    2, 0x08 /* Private */,
-      18,    1,  122,    2, 0x08 /* Private */,
-      19,    1,  125,    2, 0x08 /* Private */,
+       1,    1,  104,    2, 0x08 /* Private */,
+       4,    1,  107,    2, 0x08 /* Private */,
+       5,    1,  110,    2, 0x08 /* Private */,
+       6,    1,  113,    2, 0x08 /* Private */,
+       7,    1,  116,    2, 0x08 /* Private */,
+       8,    0,  119,    2, 0x08 /* Private */,
+       9,    1,  120,    2, 0x08 /* Private */,
+      11,    1,  123,    2, 0x08 /* Private */,
+      12,    0,  126,    2, 0x08 /* Private */,
+      13,    0,  127,    2, 0x08 /* Private */,
+      14,    0,  128,    2, 0x08 /* Private */,
+      15,    0,  129,    2, 0x08 /* Private */,
+      16,    0,  130,    2, 0x08 /* Private */,
+      17,    0,  131,    2, 0x08 /* Private */,
+      18,    0,  132,    2, 0x08 /* Private */,
+      19,    1,  133,    2, 0x08 /* Private */,
+      20,    1,  136,    2, 0x08 /* Private */,
+      21,    1,  139,    2, 0x08 /* Private */,
 
  // slots: parameters
     QMetaType::Void, QMetaType::Int,    3,
@@ -110,6 +115,8 @@ static const uint qt_meta_data_Window[] = {
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void, QMetaType::Int,    3,
     QMetaType::Void, QMetaType::Int,    3,
     QMetaType::Void, QMetaType::Int,    3,
 
@@ -136,8 +143,10 @@ void Window::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void
         case 11: _t->reformatCalendarPage(); break;
         case 12: _t->handleCodeViewer(); break;
         case 13: _t->handleAnalysis(); break;
-        case 14: _t->threadTypeChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 15: _t->targetTypeChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 14: _t->handleGraphExpand(); break;
+        case 15: _t->threadTypeChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 16: _t->targetTypeChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 17: _t->AnalysisTypeChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
         default: ;
         }
     }
@@ -168,13 +177,13 @@ int Window::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 16)
+        if (_id < 18)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 16;
+        _id -= 18;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 16)
+        if (_id < 18)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 16;
+        _id -= 18;
     }
     return _id;
 }

@@ -41,9 +41,11 @@ private slots:
     void reformatCalendarPage();
     void handleCodeViewer();
     void handleAnalysis();
+    void handleGraphExpand();
 
     void threadTypeChanged(int index);
     void targetTypeChanged(int index);
+    void AnalysisTypeChanged(int index);
 
 
 private:
@@ -54,6 +56,7 @@ private:
     void createGeneralOptionsGroupBox();
     void createTextFormatsGroupBox();
     void createAnalysisResultGroupBox();
+    void createAnalysisPathGroupBox();
 
 
     QComboBox *createColorComboBox();
@@ -65,6 +68,15 @@ private:
     QFile sourceFile;
     QTextEdit *sourceCodeViewer;
 
+
+    QGroupBox* UpperGroupBox;
+    QGridLayout *UpperLayout;
+
+    QGroupBox* LowerGroupBox;
+    QGridLayout *LowerLayout;
+
+
+
     QGroupBox* codeAnalysisBox;
     QGridLayout *codeAnalysisLayout;
     QGroupBox* codeAnalysisRunBox;
@@ -73,6 +85,8 @@ private:
     QGridLayout *codeAnalysisSettingLayout;
     QGroupBox* codeAnalysisGraphBox;
     QGridLayout *codeAnalysisGraphLayout;
+
+
 
     QString InnerProgramCodeAnalysis;
     QString InnerProgramDrawCallGraph;
@@ -90,6 +104,12 @@ private:
     QString AnalysisResultFileName;
     QFile AnalysisResultFile;
 
+    QGroupBox *codeAnalysisPathBox;
+    QGridLayout *AnalysisPathLayout;
+    QTextEdit *AnalysisPathViewer;
+    QString AnalysisPathFileName;
+    QFile AnalysisPathFile;
+
     QLabel* analysisGraphLabel;
     QPixmap analysisGraph;
     QString analysisGraphName;
@@ -105,8 +125,11 @@ private:
     QProcess *CallgraphDraw;
     QProcess *bitcodeGen;
 
+
     QString threadOption;
     QString targetOption;
+    QString AnalysisOption;
+
 
     QGridLayout *previewLayout;
 
@@ -124,9 +147,13 @@ private:
 
     QLabel *threadLabel;
     QLabel *targetLabel;
+    QLabel *AnalysisLabel;
+
 
     QComboBox *threadCombo;
     QComboBox *targetCombo;
+    QComboBox *AnalysisCombo;
+
 
     QComboBox *localeCombo;
     QComboBox *firstDayCombo;
